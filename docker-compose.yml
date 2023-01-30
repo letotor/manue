@@ -1,0 +1,99 @@
+version: '3.8'
+services:
+
+  adminer:
+    image: adminer:latest
+    restart: always
+    ports:
+      - 8087:8080
+    networks:
+      - backend
+    volumes:
+      - type : bind
+        source : ./dracula/
+        target : /var/www/html/adminer/designs/dracula/
+    environment:
+      - ADMINER_DESIGN=dracula
+
+
+  db:
+    restart: always
+    image: mariadb:10.2.7
+    # build: 
+    #   context: db
+    #   dockerfile: DockerFile
+    networks:
+    - backend
+    environment:
+      MYSQL_ROOT_PASSWORD: 'manue'
+      MYSQL_DATABASE: 'manue'
+      MYSQL_USER: 'manue'
+      MYSQL_PASSWORD: 'manue'
+    ports:
+    - 33062:3306
+    volumes:
+      - mysql_db_manue:/var/lib/mysql
+      - ./db/conf/mysql:/etc/mysql/conf.db
+      
+  app:
+    restart: always
+    build: 
+      context : ./back
+      dockerfile: ./Dockerfile.dev   
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: development
+      DB_HOST : db
+      DB_PORT : 3306
+      DB_NAME : manue
+      DB_USER : manue
+      DB_PASSWORD : manue
+    ports:
+      - 8080:3308
+    volumes:
+      - type: bind
+        source: ./back
+        target: /app
+      - type: volume
+        target: /app/node_modules
+    command: yarn "start:dev"
+    networks:
+      - backend
+    depends_on:
+      - db
+
+  # db:
+  #   #image: mysql:8.0
+  #   build: 
+  #      context: ./db
+  #      dockerfile: Dockerfile.dev
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - 33061:3306 # acccess to db from host
+  #   environment: # used just for first time
+  #     INITIALIZE_DB: 'true'
+  #     MYSQL_ROOT_PASSWORD: password
+  #     MYSQL_DATABASE: ${DB_NAME}
+  #     # MYSQL_USER: ${DB_USER}
+  #     MYSQL_PASSWORD: ${DB_PASSWORD}
+  #   volumes:
+  #     - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+  #     - mysql_db_manue:/var/lib/mysql 
+  #     - type: bind
+  #       source: ./db/conf.d
+  #       target: /etc/mysql/conf.d:ro              
+  #   networks:
+  #     - backend
+  
+
+
+networks:
+  frontend:
+  backend:
+
+  
+volumes:
+  mysql_db_manue:
+    external: true

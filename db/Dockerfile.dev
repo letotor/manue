@@ -1,0 +1,16 @@
+FROM mysql:8.0
+
+# Copie le fichier init.sql dans le répertoire /docker-entrypoint-initdb.d/
+COPY init.sql /docker-entrypoint-initdb.d/
+RUN chown -R mysql:mysql /docker-entrypoint-initdb.d/
+
+# Crée un utilisateur et une base de données avec le nom 'manue'
+# Remplacez les valeurs de mot de passe et de base de données par les valeurs souhaitées
+ENV MYSQL_USER=manue
+ENV MYSQL_ROOT_PASSWORD=password
+ENV MYSQL_PASSWORD=manue
+ENV MYSQL_DATABASE=manue
+# RUN mysql -u root -p{password} < /docker-entrypoint-initdb.d/init.sql
+
+CMD ["mysqld", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+
