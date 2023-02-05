@@ -35,7 +35,9 @@ services:
       - mysql_db_manue:/var/lib/mysql
       - ./db/conf/mysql:/etc/mysql/conf.db
       
-  app:
+  app_back:
+    stdin_open: true
+    tty: true
     restart: always
     build: 
       context : ./back
@@ -49,8 +51,11 @@ services:
       DB_NAME : manue
       DB_USER : manue
       DB_PASSWORD : manue
+      PORT: 8080
+      FRONT: http://localhost
+
     ports:
-      - 8080:3308
+      - 8080:8080
     volumes:
       - type: bind
         source: ./back
@@ -62,6 +67,37 @@ services:
       - backend
     depends_on:
       - db
+
+  app_front:
+    stdin_open: true
+    tty: true
+    restart: always
+    build: 
+      context : ./front
+      dockerfile: ./Dockerfile.dev   
+    # env_file:
+    #   - .env
+    environment:
+      NODE_ENV: development
+      REACT_APP_BACK: http://localhost:8080
+      WDS_SOCKET_PORT: 443
+      WDS_SOCKET_HOST: localhost
+      PORT: 80
+      FRONT: '*'
+    ports:
+      - 80:80
+    volumes:
+      - type: bind
+        source: ./front
+        target: /app
+      - type: volume
+        target: /app/node_modules
+    command: yarn "start"
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      - app_back
 
   # db:
   #   #image: mysql:8.0
